@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DialSort
 
-## Getting Started
+Power dialer supervisé B2B. L'agent déclenche des appels en séquence ; dès qu'un humain décroche (détection AMD Twilio), l'agent est notifié et prend l'appel directement dans le navigateur.
 
-First, run the development server:
+## Prérequis
+
+- Node.js ≥ 20
+- PostgreSQL ≥ 15
+- Redis ≥ 7
+- Compte Twilio avec un numéro de téléphone actif
+
+## Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repo>
+cd dialsort
+npm install
+cp .env.example .env.local
+# Remplir les variables dans .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Base de données (local)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Démarrer PostgreSQL
+brew services start postgresql@15
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Créer la base
+createdb dialsort
 
-## Learn More
+# Appliquer le schéma
+npm run db:migrate
 
-To learn more about Next.js, take a look at the following resources:
+# (optionnel) Interface graphique
+npm run db:studio
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Redis (local)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+brew services start redis
+```
 
-## Deploy on Vercel
+## Lancement dev
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run dev        # Next.js sur http://localhost:3001
+npm run worker     # Worker d'appels Bull (dans un second terminal)
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Vérifications
+
+```bash
+npm run check      # TypeScript + ESLint + Prettier
+npm run build      # Build de production
+```
+
+## Variables d'environnement
+
+Voir `.env.example` pour la liste complète et les commandes de génération.
+
+## Tunnel Twilio (webhooks en dev)
+
+```bash
+ngrok http 3001
+# Copier l'URL HTTPS dans NEXT_PUBLIC_APP_URL de .env.local
+```

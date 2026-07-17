@@ -1,0 +1,288 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Plan {
+  ESSENTIEL
+  PRO
+  EXPERT
+}
+
+enum BillingCycle {
+  MONTHLY
+  ANNUAL
+}
+
+enum UserRole {
+  ADMIN
+  AGENT
+}
+
+enum TwilioStatus {
+  CONNECTED
+  INVALID_KEY
+  QUOTA_EXCEEDED
+  SUSPENDED
+  DISCONNECTED
+}
+
+enum ProspectStatus {
+  ACTIVE
+  EXCLUDED
+}
+
+enum DispositionKind {
+  SYSTEM
+  CUSTOM
+}
+
+enum DispositionBehavior {
+  NONE
+  DO_NOT_CALL
+  CALLBACK
+  VOICEMAIL
+}
+
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+// Legal calling grid (France): Mon–Fri, 10:00–13:00 and 14:00–20:00.
+// IMPORTANT: these bounds reflect the legal framework in force as of 2025.
+// A future decree (expected post-11/08/2026) may revise them. If that happens,
+// do NOT rename these enum values (historical call records must remain readable);
+// instead update the scheduling logic and document the change here.
+enum Slot {
+  MATIN       // 10:00–13:00
+  DEBUT_APREM // 14:00–17:00
+  FIN_APREM   // 17:00–20:00
+}
+
+enum CallResult {
+  HUMAN_ANSWERED     // Human picked up; agent took the call
+  ANSWERED_NOT_TAKEN // Human picked up but agent did not answer — must NOT penalise the prospect's score
+  VOICEMAIL          // Answering machine detected
+  NO_ANSWER          // Phone rang but nobody picked up (or busy)
+  INVALID_NUMBER     // SIP 404/410 or Twilio error 21211/21214 — number doesn't exist or is disconnected
+  FAILED             // Other technical failure (Twilio error, network…)
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model Account {
+  id                        String       @id @default(cuid())
+  name                      String
+  plan                      Plan         @default(ESSENTIEL)
+  billingCycle              BillingCycle @default(MONTHLY)
+  extraCreditsMonthly       Int          @default(0)
+  stripeCustomerId          String?      @unique
+  stripeSubscriptionId      String?      @unique
+  stripeSubscriptionStatus  String?
+  createdAt                 DateTime     @default(now())
+
+  users             User[]
+  twilioConnection  TwilioConnection?
+  prospectLists     ProspectList[]
+  prospects         Prospect[]
+  tags              Tag[]
+  notes             Note[]
+  dispositions      Disposition[]
+  campaigns         Campaign[]
+  callAttempts      CallAttempt[]
+  prospectSlotStats ProspectSlotStat[]
+  creditLedger      CreditLedger[]
+}
+
+model User {
+  id                      String    @id @default(cuid())
+  email                   String    @unique
+  hashedPassword          String
+  accountId               String
+  role                    UserRole  @default(AGENT)
+  emailVerified           Boolean   @default(false)
+  verificationToken       String?   @unique
+  verificationTokenExpiry DateTime?
+  createdAt               DateTime  @default(now())
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  notes   Note[]
+}
+
+// Encrypted Twilio credentials — one connection per account.
+// Encryption/decryption is handled in lib/crypto.ts; only ciphertext is stored here.
+// Store either (encAccountSid + encAuthToken) for main credentials,
+// or (encApiKey + encApiSecret) for API key auth — not both simultaneously.
+model TwilioConnection {
+  id            String       @id @default(cuid())
+  accountId     String       @unique
+  encAccountSid String?
+  encAuthToken  String?
+  encApiKey     String?
+  encApiSecret  String?
+  phoneNumber   String
+  region        String?
+  status        TwilioStatus @default(DISCONNECTED)
+  verifiedAt    DateTime?
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model ProspectList {
+  id                   String   @id @default(cuid())
+  accountId            String
+  name                 String
+  sourceFileName       String?
+  legalBasis           String
+  legalBasisDeclaredAt DateTime
+  importedAt           DateTime @default(now())
+
+  account   Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  prospects Prospect[]
+  campaigns CampaignProspectList[]
+}
+
+model Prospect {
+  id          String         @id @default(cuid())
+  accountId   String
+  listId      String
+  phoneNumber String
+  company     String?
+  contactName String?
+  status      ProspectStatus @default(ACTIVE)
+  excludedAt  DateTime?      // Set when status becomes EXCLUDED; exclusion is permanent
+  createdAt   DateTime       @default(now())
+
+  account      Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  list         ProspectList       @relation(fields: [listId], references: [id])
+  tags         ProspectTag[]
+  notes        Note[]
+  callAttempts CallAttempt[]
+  slotStats    ProspectSlotStat[]
+
+  @@unique([accountId, phoneNumber])
+}
+
+model Tag {
+  id        String @id @default(cuid())
+  accountId String
+  name      String
+  color     String @default("#6366f1")
+
+  account   Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  prospects ProspectTag[]
+
+  @@unique([accountId, name])
+}
+
+model ProspectTag {
+  prospectId String
+  tagId      String
+
+  prospect Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([prospectId, tagId])
+}
+
+model Note {
+  id         String   @id @default(cuid())
+  accountId  String
+  prospectId String
+  authorId   String
+  body       String
+  createdAt  DateTime @default(now())
+
+  account  Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  prospect Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  author   User     @relation(fields: [authorId], references: [id])
+}
+
+model Disposition {
+  id        String              @id @default(cuid())
+  accountId String
+  label     String
+  kind      DispositionKind     @default(CUSTOM)
+  behavior  DispositionBehavior @default(NONE)
+
+  account      Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  callAttempts CallAttempt[]
+}
+
+model Campaign {
+  id        String         @id @default(cuid())
+  accountId String
+  name      String
+  status    CampaignStatus @default(ACTIVE)
+  createdAt DateTime       @default(now())
+
+  account       Account                @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  prospectLists CampaignProspectList[]
+  callAttempts  CallAttempt[]
+}
+
+model CampaignProspectList {
+  campaignId     String
+  prospectListId String
+
+  campaign     Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  prospectList ProspectList @relation(fields: [prospectListId], references: [id], onDelete: Cascade)
+
+  @@id([campaignId, prospectListId])
+}
+
+model CallAttempt {
+  id             String      @id @default(cuid())
+  accountId      String
+  prospectId     String
+  campaignId     String
+  slot           Slot
+  twilioCallSid  String?     @unique
+  startedAt      DateTime    @default(now())
+  durationSec    Int?
+  result         CallResult?
+  dispositionId  String?
+  callbackAt     DateTime?
+  creditsCharged Int         @default(0)
+
+  account     Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  prospect    Prospect     @relation(fields: [prospectId], references: [id])
+  campaign    Campaign     @relation(fields: [campaignId], references: [id])
+  disposition Disposition? @relation(fields: [dispositionId], references: [id])
+}
+
+// Per-prospect per-slot aggregate for scoring.
+// score = humanAnswers / attempts (treat as 0 when attempts = 0).
+// Computed in the application layer; never stored directly.
+model ProspectSlotStat {
+  prospectId   String
+  slot         Slot
+  accountId    String
+  attempts     Int    @default(0)
+  humanAnswers Int    @default(0)
+
+  prospect Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  account  Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@id([prospectId, slot])
+}
+
+// Append-only ledger — account balance = SUM(delta).
+// Never UPDATE or DELETE rows; always INSERT.
+model CreditLedger {
+  id                   String   @id @default(cuid())
+  accountId            String
+  delta                Int
+  reason               String
+  relatedCallAttemptId String?
+  createdAt            DateTime @default(now())
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
