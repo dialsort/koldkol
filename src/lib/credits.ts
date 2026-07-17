@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { PLAN_CONFIG } from "@/lib/plan-config";
+import type { Prisma } from "@prisma/client";
 
 export async function getBalance(accountId: string): Promise<number> {
   const agg = await prisma.creditLedger.aggregate({
@@ -31,7 +32,7 @@ export async function charge(
   reason: string,
   callAttemptId?: string
 ): Promise<void> {
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const agg = await tx.creditLedger.aggregate({
       where: { accountId },
       _sum: { delta: true },
@@ -69,7 +70,7 @@ export async function performMonthlyPlanReset(accountId: string): Promise<void> 
 
   const config = PLAN_CONFIG[account.plan];
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const lastGrant = await tx.creditLedger.findFirst({
       where: { accountId, reason: "PLAN_MONTHLY_GRANT" },
       orderBy: { createdAt: "desc" },

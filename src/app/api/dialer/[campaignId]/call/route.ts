@@ -5,6 +5,7 @@ import { getTwilioClientForAccount, placeDialerCall } from "@/lib/twilio";
 import { getNextProspect } from "@/lib/queue";
 import { getCurrentSlot, isWithinLegalWindow, nextLegalWindow } from "@/lib/slots";
 import type { Slot } from "@/types";
+import type { Prisma } from "@prisma/client";
 
 /**
  * POST /api/dialer/[campaignId]/call
@@ -100,7 +101,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ campaig
   // cannot slip through between the in-progress check and the attempt INSERT.
   let attempt: { id: string };
   try {
-    attempt = await prisma.$transaction(async (tx) => {
+    attempt = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Re-verify campaign is still ACTIVE (could have been paused since pre-flight)
       const cam = await tx.campaign.findUnique({
         where: { id: campaignId },

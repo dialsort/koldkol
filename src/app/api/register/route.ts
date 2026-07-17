@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail, verificationEmailHtml } from "@/lib/email";
 import { z } from "zod";
 import type { DispositionBehavior } from "@/types";
+import type { Prisma } from "@prisma/client";
 
 const passwordSchema = z
   .string()
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
     const verificationToken = randomBytes(32).toString("hex");
     const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const account = await tx.account.create({
         data: { name: accountName },
       });
