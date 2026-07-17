@@ -51,7 +51,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ campaig
 
   if (body.prospectId) {
     // Manual selection — verify prospect belongs to this account and campaign's lists
-    const listIds = campaign.prospectLists.map((pl) => pl.prospectListId);
+    const listIds = campaign.prospectLists.map((pl: { prospectListId: string }) => pl.prospectListId);
     const prospect = await prisma.prospect.findUnique({
       where: { id: body.prospectId, accountId: ctx.accountId },
       select: { id: true, phoneNumber: true, status: true, listId: true },
