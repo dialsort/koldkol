@@ -78,12 +78,8 @@ export const metadata: Metadata = {
     creator: "@koldkol",
   },
   icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/icon.png", type: "image/png" },
-    ],
-    shortcut: "/favicon.ico",
-    apple: "/apple-icon.png",
+    icon: [{ url: "/icon.png", type: "image/png", sizes: "1254x1254" }],
+    apple: [{ url: "/apple-icon.png", type: "image/png", sizes: "1254x1254" }],
   },
   manifest: "/manifest.json",
   alternates: {
