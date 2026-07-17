@@ -15,7 +15,7 @@ const STATUS_UI: Record<TwilioStatus, { label: string; icon: string; color: stri
 
 function CredentialForm({ onSuccess }: { onSuccess: (r: VerifyResult) => void }) {
   const [isPending, startTransition] = useTransition();
-  const [form, setForm] = useState({ accountSid: "", authToken: "", phoneNumber: "" });
+  const [form, setForm] = useState({ accountSid: "", authToken: "", apiKey: "", apiSecret: "", phoneNumber: "", authMode: "token" as "apikey" | "token" });
   const [showToken, setShowToken] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
