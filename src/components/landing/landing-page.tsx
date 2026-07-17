@@ -293,7 +293,7 @@ export default function LandingPage() {
               Connexion
             </Link>
             <Link
-              href="/register"
+              href="/signup"
               className="relative overflow-hidden rounded-full bg-red-600 px-5 py-2 text-[13px] font-bold text-white shadow-lg shadow-red-500/30 transition-all duration-300 hover:shadow-red-500/50 hover:-translate-y-px active:translate-y-0 group"
             >
               <span className="relative z-10">Démarrer gratuitement</span>
@@ -375,7 +375,7 @@ export default function LandingPage() {
           style={{ animation: "slide-up 0.9s cubic-bezier(0.16,1,0.3,1) 0.45s both" }}
         >
           <Link
-            href="/register"
+            href="/signup"
             className="group relative overflow-hidden rounded-full bg-red-600 px-9 py-4 text-[15px] font-bold text-white shadow-2xl shadow-red-500/35 transition-all duration-300 hover:shadow-red-500/55 hover:-translate-y-0.5"
           >
             <span className="relative z-10">Essayer gratuitement →</span>
@@ -728,7 +728,7 @@ export default function LandingPage() {
 
                   {/* CTA */}
                   <Link
-                    href="/register"
+                    href="/signup"
                     className={`relative overflow-hidden block w-full rounded-full py-3.5 text-center text-[13px] font-bold transition-all duration-300 group ${
                       plan.dark
                         ? "bg-red-600 text-white hover:bg-red-500 shadow-lg shadow-red-600/25"
@@ -785,7 +785,7 @@ export default function LandingPage() {
             contacts qui répondent.
           </p>
           <Link
-            href="/register"
+            href="/signup"
             className="group inline-flex items-center gap-3 rounded-full bg-white px-10 py-4 text-[15px] font-black text-red-600 shadow-2xl shadow-black/25 transition-all duration-300 hover:bg-red-50 hover:-translate-y-1 hover:shadow-black/35"
           >
             Démarrer gratuitement
@@ -817,7 +817,7 @@ export default function LandingPage() {
               <Link href="/login" className="hover:text-gray-900 transition-colors">
                 Connexion
               </Link>
-              <Link href="/register" className="hover:text-gray-900 transition-colors">
+              <Link href="/signup" className="hover:text-gray-900 transition-colors">
                 S'inscrire
               </Link>
             </div>

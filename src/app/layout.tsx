@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -12,14 +12,87 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://koldkol.com";
+
+export const viewport: Viewport = {
+  themeColor: "#dc2626",
+};
+
 export const metadata: Metadata = {
-  title: "KoldKol — Triez vos prospects intelligemment",
-  description: "Identifiez automatiquement les contacts joignables pour vos équipes commerciales",
-  icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
-    apple: "/logo.png",
+  metadataBase: new URL(APP_URL),
+  title: {
+    default: "KoldKol — Triez vos prospects intelligemment",
+    template: "%s | KoldKol",
   },
+  description:
+    "KoldKol est le logiciel de cold calling qui trie automatiquement vos prospects : détection répondeur, créneaux optimisés, analytics en temps réel. Essayez gratuitement.",
+  keywords: [
+    "cold calling",
+    "prospection téléphonique",
+    "logiciel de phoning",
+    "détection répondeur",
+    "campagne d'appels",
+    "prospection commerciale",
+    "CRM appels",
+    "auto-dialer",
+    "predictive dialer",
+    "KoldKol",
+  ],
+  authors: [{ name: "KoldKol", url: APP_URL }],
+  creator: "KoldKol",
+  publisher: "KoldKol",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    url: APP_URL,
+    siteName: "KoldKol",
+    title: "KoldKol — Triez vos prospects intelligemment",
+    description:
+      "Identifiez automatiquement les contacts joignables. Détection répondeur, créneaux optimisés, analytics en temps réel.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "KoldKol — Logiciel de cold calling intelligent",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "KoldKol — Triez vos prospects intelligemment",
+    description:
+      "Identifiez automatiquement les contacts joignables. Détection répondeur, créneaux optimisés, analytics en temps réel.",
+    images: ["/og-image.png"],
+    creator: "@koldkol",
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-icon.png",
+  },
+  manifest: "/manifest.json",
+  alternates: {
+    canonical: APP_URL,
+    languages: {
+      "fr-FR": APP_URL,
+    },
+  },
+  category: "technology",
 };
 
 export default function RootLayout({

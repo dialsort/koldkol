@@ -1,0 +1,21 @@
+{
+  "name": "KoldKol",
+  "short_name": "KoldKol",
+  "description": "Logiciel de cold calling qui trie vos prospects intelligemment",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#dc2626",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
